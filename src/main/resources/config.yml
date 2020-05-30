@@ -1,0 +1,13 @@
+#玩家防止破坏方块，其他原因导致的方块更改
+记录方块变化: true
+#丢出物品 拾取物品 更改游戏模式
+记录玩家操作: false
+#玩家聊天/使用命令记录
+记录玩家聊天信息: true
+#数据库配置
+MySQL:
+  host: "127.0.0.1"
+  port: 3306
+  user: "root"
+  passWorld: "root"
+  database: "test"

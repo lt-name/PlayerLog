@@ -1,0 +1,15 @@
+name: PlayerLog
+main: cn.lanink.playerlog.PlayerLog
+version: "1.0.0-SNAPSHOT"
+api:
+  - 1.0.0
+load: POSTWORLD
+author: LT_Name
+depend:
+  - "EasySQL"
+  - "DbLib"
+
+permissions:
+  PlayerLog.command.admin:
+    description: "PlayerLog 管理命令"
+    default: op

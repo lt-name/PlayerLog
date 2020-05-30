@@ -1,0 +1,233 @@
+package cn.lanink.playerlog.Listener;
+
+import cn.lanink.playerlog.PlayerLog;
+import cn.nukkit.Player;
+import cn.nukkit.block.Block;
+import cn.nukkit.event.EventHandler;
+import cn.nukkit.event.EventPriority;
+import cn.nukkit.event.Listener;
+import cn.nukkit.event.block.*;
+import cn.nukkit.form.window.FormWindowModal;
+import cn.nukkit.form.window.FormWindowSimple;
+import cn.nukkit.scheduler.AsyncTask;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.UUID;
+
+public class BlockListener implements Listener {
+
+    private final PlayerLog playerLog;
+
+    public BlockListener(PlayerLog playerLog) {
+        this.playerLog = playerLog;
+    }
+
+    /**
+     * 玩家放置方块事件
+     * @param event 事件
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlace(BlockPlaceEvent event) {
+        Player player = event.getPlayer();
+        Block block = event.getBlock();
+        if (player == null || block == null) return;
+        if (this.playerLog.queryPlayer.contains(player)) {
+            event.setCancelled(true);
+            this.query(player, block);
+            return;
+        }
+        if (event.isCancelled()) return;
+        Block oldBlock = block.getLevel().getBlock(block);
+        this.insertBlockLog("place", oldBlock, block, player);
+    }
+
+    /**
+     * 玩家破坏方块事件
+     * @param event 事件
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onBreak(BlockBreakEvent event) {
+        if (event.isCancelled()) return;
+        Player player = event.getPlayer();
+        Block block = event.getBlock();
+        if (player == null || block == null) return;
+        if (this.playerLog.queryPlayer.contains(player)) {
+            event.setCancelled(true);
+            this.query(player, block);
+            return;
+        }
+        this.insertBlockLog("break", block, Block.get(0), player);
+    }
+
+    /**
+     * 方块被火烧掉事件
+     * @param event 事件
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onBurn(BlockBurnEvent event) {
+        if (event.isCancelled()) return;
+        Block block = event.getBlock();
+        if (block == null) return;
+        this.insertBlockLog("break", block, Block.get(0), "by@burn");
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onFade(BlockFadeEvent event) {
+        if (event.isCancelled()) return;
+        Block block = event.getBlock();
+        if (block == null) return;
+        this.insertBlockLog("break", block, Block.get(0), "by@fade");
+    }
+
+    /**
+     * 自然生长事件
+     * @param event 事件
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onGrow(BlockGrowEvent event) {
+        if (event.isCancelled()) return;
+        Block oldBlock = event.getBlock();
+        Block newBlock = event.getNewState();
+        if (oldBlock == null || newBlock == null) return;
+        this.insertBlockLog("update", oldBlock, newBlock, "by@grow");
+    }
+
+    /**
+     * 方块受到红石信号影响变化事件
+     * @param event 事件
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onRedstone(BlockRedstoneEvent event) {
+        Block block = event.getBlock();
+        if (block == null) return;
+        Block oldBlock = block.getLevel().getBlock(block);
+        this.insertBlockLog("update", oldBlock, block, "by@Redstone");
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onForm(BlockFormEvent event) {
+        Block oldBlock = event.getBlock();
+        Block block = event.getNewState();
+        if (oldBlock == null || block == null) return;
+        this.insertBlockLog("update", oldBlock, block, "by@form");
+    }
+
+    private void insertBlockLog(String operating, Block oldBlock, Block newBlock, Player player) {
+        String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
+            @Override
+            public void onRun() {
+                try {
+                    PreparedStatement preparedStatement = playerLog.getConnection()
+                            .prepareStatement("insert into " + playerLog.blockTitle + "(position, world, operating, oldblock, newblock, uuid, name, time) values(?,?,?,?,?,?,?,?)");
+                    preparedStatement.setString(1, getStringPosition(oldBlock));
+                    preparedStatement.setString(2, oldBlock.getLevel().getName());
+                    preparedStatement.setString(3, operating);
+                    preparedStatement.setString(4, getStringID(oldBlock));
+                    preparedStatement.setString(5, getStringID(newBlock));
+                    preparedStatement.setString(6, player.getUniqueId().toString());
+                    preparedStatement.setString(7, player.getName());
+                    preparedStatement.setString(8, time);
+                    preparedStatement.execute();
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void insertBlockLog(String operating, Block oldBlock, Block newBlock, String type) {
+        String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
+            @Override
+            public void onRun() {
+                try {
+                    PreparedStatement preparedStatement = playerLog.getConnection()
+                            .prepareStatement("insert into " + playerLog.blockTitle + "(position, world, operating, oldblock, newblock, uuid, name, time) values(?,?,?,?,?,?,?,?)");
+                    preparedStatement.setString(1, getStringPosition(oldBlock));
+                    preparedStatement.setString(2, oldBlock.getLevel().getName());
+                    preparedStatement.setString(3, operating);
+                    preparedStatement.setString(4, getStringID(oldBlock));
+                    preparedStatement.setString(5, getStringID(newBlock));
+                    preparedStatement.setString(6, "------------------------------------");
+                    preparedStatement.setString(7, type);
+                    preparedStatement.setString(8, time);
+                    preparedStatement.execute();
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void query(Player player, Block block) {
+        player.sendMessage("正在异步查询，请稍后...");
+        this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
+            @Override
+            public void onRun() {
+                LinkedList<String> linkedList = new LinkedList<>();
+                try {
+                    PreparedStatement preparedStatement = playerLog.getConnection()
+                            .prepareStatement("select * from " + playerLog.blockTitle + " where position = ? and world = ?");
+                    preparedStatement.setString(1, getStringPosition(block));
+                    preparedStatement.setString(2, block.getLevel().getName());
+                    ResultSet resultSet = preparedStatement.executeQuery();
+                    int i = 0;
+                    while (resultSet.next()) {
+                        linkedList.add(resultSet.getString("position") + "#" +
+                                resultSet.getString("world") + "#" +
+                                resultSet.getString("operating") + "#" +
+                                resultSet.getString("oldblock") + "#" +
+                                resultSet.getString("newblock") + "#" +
+                                resultSet.getString("uuid") + "#" +
+                                resultSet.getString("name") + "#" +
+                                resultSet.getString("time"));
+                    }
+                } catch (SQLException var5) {
+                    var5.printStackTrace();
+                }
+                if (linkedList.size() > 0) {
+                    Collections.reverse(linkedList);
+                    LinkedList<String> send = new LinkedList<>();
+                    int x = 0;
+                    for (String string : linkedList) {
+                        x++;
+                        if (x > 100) break;
+                        String[] s = string.split("#");
+                        String name;
+                        if (s[5].matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
+                            UUID uuid = UUID.fromString(s[5]);
+                            name = "§f玩家§a" + playerLog.getServer().getOfflinePlayer(uuid).getName();
+                        }else {
+                            name = "§f非玩家操作:§c" + s[6].split("@")[1];
+                        }
+                        send.add(name + " §f操作:§e" + s[2] + " §f旧方块:§c" + s[3] + " §f新方块:§a" + s[4] + " §f时间:§b" + s[7]);
+                    }
+                    StringBuilder s = new StringBuilder();
+                    for (String string : send) {
+                        s.append(string).append("\n\n");
+                    }
+                    FormWindowSimple simple = new FormWindowSimple("§9记录(最近100条)", s.toString());
+                    player.showFormWindow(simple, 78453124);
+                }else {
+                    player.sendMessage("此方块没有操作记录！");
+                }
+            }
+        });
+    }
+
+    private String getStringPosition(Block block) {
+        return block.getFloorX() + ":" + block.getFloorY() + ":" + block.getFloorZ();
+    }
+
+    private String getStringID(Block block) {
+        return block.getId() + ":" + block.getDamage();
+    }
+
+}
