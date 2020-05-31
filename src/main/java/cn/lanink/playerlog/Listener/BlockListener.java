@@ -84,39 +84,6 @@ public class BlockListener implements Listener {
         this.insertBlockLog("break", block, Block.get(0), "by@fade");
     }
 
-    /**
-     * 自然生长事件
-     * @param event 事件
-     */
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onGrow(BlockGrowEvent event) {
-        if (event.isCancelled()) return;
-        Block oldBlock = event.getBlock();
-        Block newBlock = event.getNewState();
-        if (oldBlock == null || newBlock == null) return;
-        this.insertBlockLog("update", oldBlock, newBlock, "by@grow");
-    }
-
-    /**
-     * 方块受到红石信号影响变化事件
-     * @param event 事件
-     */
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onRedstone(BlockRedstoneEvent event) {
-        Block block = event.getBlock();
-        if (block == null) return;
-        Block oldBlock = block.getLevel().getBlock(block);
-        this.insertBlockLog("update", oldBlock, block, "by@Redstone");
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onForm(BlockFormEvent event) {
-        Block oldBlock = event.getBlock();
-        Block block = event.getNewState();
-        if (oldBlock == null || block == null) return;
-        this.insertBlockLog("update", oldBlock, block, "by@form");
-    }
-
     private void insertBlockLog(String operating, Block oldBlock, Block newBlock, Player player) {
         String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
