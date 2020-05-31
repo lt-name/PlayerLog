@@ -43,6 +43,9 @@ public class PlayerListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         if (player == null) return;
+        while (this.playerLog.queryPlayer.contains(player)) {
+            this.playerLog.queryPlayer.remove(player);
+        }
         this.insertPlayerLog(player, "QuitGame");
     }
 
@@ -107,7 +110,8 @@ public class PlayerListener implements Listener {
                 String position = player.getFloorX() + ":" + player.getFloorY() + ":" + player.getFloorZ();
                 try {
                     PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("insert into " + playerLog.playerTitle + "(uuid, name, operating, position, world, time) values(?,?,?,?,?,?)");
+                            .prepareStatement("insert into " + playerLog.playerTable +
+                                    "(uuid, name, operating, position, world, time) values(?,?,?,?,?,?)");
                     preparedStatement.setString(1, player.getUniqueId().toString());
                     preparedStatement.setString(2, player.getName());
                     preparedStatement.setString(3, operating);

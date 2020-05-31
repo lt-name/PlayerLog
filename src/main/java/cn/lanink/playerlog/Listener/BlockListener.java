@@ -7,7 +7,6 @@ import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.EventPriority;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.block.*;
-import cn.nukkit.form.window.FormWindowModal;
 import cn.nukkit.form.window.FormWindowSimple;
 import cn.nukkit.scheduler.AsyncTask;
 
@@ -125,9 +124,9 @@ public class BlockListener implements Listener {
             public void onRun() {
                 try {
                     PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("insert into " + playerLog.blockTitle + "(position, world, operating, oldblock, newblock, uuid, name, time) values(?,?,?,?,?,?,?,?)");
-                    preparedStatement.setString(1, getStringPosition(oldBlock));
-                    preparedStatement.setString(2, oldBlock.getLevel().getName());
+                            .prepareStatement("insert into " + playerLog.blockTable + "(world, position, operating, oldblock, newblock, uuid, name, time) values(?,?,?,?,?,?,?,?)");
+                    preparedStatement.setString(1, oldBlock.getLevel().getName());
+                    preparedStatement.setString(2, getStringPosition(oldBlock));
                     preparedStatement.setString(3, operating);
                     preparedStatement.setString(4, getStringID(oldBlock));
                     preparedStatement.setString(5, getStringID(newBlock));
@@ -149,9 +148,9 @@ public class BlockListener implements Listener {
             public void onRun() {
                 try {
                     PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("insert into " + playerLog.blockTitle + "(position, world, operating, oldblock, newblock, uuid, name, time) values(?,?,?,?,?,?,?,?)");
-                    preparedStatement.setString(1, getStringPosition(oldBlock));
-                    preparedStatement.setString(2, oldBlock.getLevel().getName());
+                            .prepareStatement("insert into " + playerLog.blockTable + "(world, position, operating, oldblock, newblock, uuid, name, time) values(?,?,?,?,?,?,?,?)");
+                    preparedStatement.setString(1, oldBlock.getLevel().getName());
+                    preparedStatement.setString(2, getStringPosition(oldBlock));
                     preparedStatement.setString(3, operating);
                     preparedStatement.setString(4, getStringID(oldBlock));
                     preparedStatement.setString(5, getStringID(newBlock));
@@ -174,15 +173,14 @@ public class BlockListener implements Listener {
                 LinkedList<String> linkedList = new LinkedList<>();
                 try {
                     PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("select * from " + playerLog.blockTitle + " where position = ? and world = ?");
-                    preparedStatement.setString(1, getStringPosition(block));
-                    preparedStatement.setString(2, block.getLevel().getName());
+                            .prepareStatement("select operating,oldblock,newblock,uuid,name,time from " +
+                                    playerLog.blockTable + " where world = ? and position = ?");
+                    preparedStatement.setString(1, block.getLevel().getName());
+                    preparedStatement.setString(2, getStringPosition(block));
                     ResultSet resultSet = preparedStatement.executeQuery();
                     int i = 0;
                     while (resultSet.next()) {
-                        linkedList.add(resultSet.getString("position") + "#" +
-                                resultSet.getString("world") + "#" +
-                                resultSet.getString("operating") + "#" +
+                        linkedList.add(resultSet.getString("operating") + "#" +
                                 resultSet.getString("oldblock") + "#" +
                                 resultSet.getString("newblock") + "#" +
                                 resultSet.getString("uuid") + "#" +
@@ -201,20 +199,20 @@ public class BlockListener implements Listener {
                         if (x > 100) break;
                         String[] s = string.split("#");
                         String name;
-                        if (s[5].matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
-                            UUID uuid = UUID.fromString(s[5]);
+                        if (s[3].matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
+                            UUID uuid = UUID.fromString(s[3]);
                             name = "§f玩家§a" + playerLog.getServer().getOfflinePlayer(uuid).getName();
                         }else {
-                            name = "§f非玩家操作:§c" + s[6].split("@")[1];
+                            name = "§f非玩家操作:§c" + s[4].split("@")[1];
                         }
-                        send.add(name + " §f操作:§e" + s[2] + " §f旧方块:§c" + s[3] + " §f新方块:§a" + s[4] + " §f时间:§b" + s[7]);
+                        send.add(name + " §f操作:§e" + s[0] + " §f旧方块:§c" + s[1] + " §f新方块:§a" + s[2] + " §f时间:§b" + s[5]);
                     }
                     StringBuilder s = new StringBuilder();
                     for (String string : send) {
                         s.append(string).append("\n\n");
                     }
                     FormWindowSimple simple = new FormWindowSimple("§9记录(最近100条)", s.toString());
-                    player.showFormWindow(simple, 78453124);
+                    player.showFormWindow(simple);
                 }else {
                     player.sendMessage("此方块没有操作记录！");
                 }

@@ -9,8 +9,6 @@ import cn.nukkit.event.player.PlayerChatEvent;
 import cn.nukkit.event.player.PlayerCommandPreprocessEvent;
 import cn.nukkit.scheduler.AsyncTask;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -31,6 +29,13 @@ public class PlayerChatListener implements Listener {
         Player player = event.getPlayer();
         String chat = event.getMessage();
         if (player == null || chat == null || chat.trim().equals("")) return;
+/*        if (this.transcoding) {
+            try {
+                chat = new String(chat.getBytes("GBK"), StandardCharsets.UTF_8);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }*/
         this.insertChatLog(player, chat);
     }
 
@@ -39,13 +44,13 @@ public class PlayerChatListener implements Listener {
         Player player = event.getPlayer();
         String chat = event.getMessage();
         if (player == null || chat == null || chat.trim().equals("")) return;
-        if (this.transcoding) {
+/*        if (this.transcoding) {
             try {
-                chat = new String(chat.getBytes("gbk"), StandardCharsets.UTF_8);
+                chat = new String(chat.getBytes("GBK"), StandardCharsets.UTF_8);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
         this.insertChatLog(player, chat);
     }
 
@@ -56,7 +61,7 @@ public class PlayerChatListener implements Listener {
             public void onRun() {
                 try {
                     PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("insert into " + playerLog.chatTitle + "(uuid, name, chat, time) values(?,?,?,?)");
+                            .prepareStatement("insert into " + playerLog.chatTable + "(uuid, name, chat, time) values(?,?,?,?)");
                     preparedStatement.setString(1, player.getUniqueId().toString());
                     preparedStatement.setString(2, player.getName());
                     preparedStatement.setString(3, message);
