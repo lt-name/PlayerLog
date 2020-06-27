@@ -76,6 +76,10 @@ public class BlockListener implements Listener {
         this.insertBlockLog("break", block, Block.get(0), "by@burn");
     }
 
+    /**
+     * 方块自然衰落消失事件
+     * @param event 事件
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onFade(BlockFadeEvent event) {
         if (event.isCancelled()) return;
@@ -101,8 +105,8 @@ public class BlockListener implements Listener {
                     preparedStatement.setString(7, player.getName());
                     preparedStatement.setString(8, time);
                     preparedStatement.execute();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -125,8 +129,8 @@ public class BlockListener implements Listener {
                     preparedStatement.setString(7, type);
                     preparedStatement.setString(8, time);
                     preparedStatement.execute();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -145,7 +149,6 @@ public class BlockListener implements Listener {
                     preparedStatement.setString(1, block.getLevel().getName());
                     preparedStatement.setString(2, getStringPosition(block));
                     ResultSet resultSet = preparedStatement.executeQuery();
-                    int i = 0;
                     while (resultSet.next()) {
                         linkedList.add(resultSet.getString("operating") + "#" +
                                 resultSet.getString("oldblock") + "#" +
@@ -154,8 +157,8 @@ public class BlockListener implements Listener {
                                 resultSet.getString("name") + "#" +
                                 resultSet.getString("time"));
                     }
-                } catch (SQLException var5) {
-                    var5.printStackTrace();
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
                 if (linkedList.size() > 0) {
                     Collections.reverse(linkedList);

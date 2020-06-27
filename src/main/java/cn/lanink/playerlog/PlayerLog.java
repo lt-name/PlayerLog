@@ -4,6 +4,7 @@ import cn.lanink.playerlog.Listener.BlockListener;
 import cn.lanink.playerlog.Listener.PlayerChatListener;
 import cn.lanink.playerlog.Listener.PlayerListener;
 import cn.lanink.playerlog.command.AdminCommand;
+import cn.lanink.playerlog.task.CheckTask;
 import cn.nukkit.Player;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
@@ -15,7 +16,7 @@ import java.util.HashMap;
 
 public class PlayerLog extends PluginBase {
 
-    private static String VERSION = "1.0.1-SNAPSHOT git-3c74c12";
+    private static String VERSION = "1.0.1-SNAPSHOT git-8d8d6ff";
     private static PlayerLog playerLog;
     private Config config;
     private Connection connection;
@@ -34,13 +35,8 @@ public class PlayerLog extends PluginBase {
         saveDefaultConfig();
         getLogger().info("版本：" + VERSION);
         this.config = new Config(getDataFolder() + "/config.yml", 2);
-        HashMap<String, Object> sqlConfig = this.config.get("MySQL", new HashMap<>());
         getLogger().info("§a正在尝试连接数据库，请稍后...");
-        this.connection = DbLib.getMySqlConnection("jdbc:mysql://" + sqlConfig.get("host") + ':' +
-                        sqlConfig.get("port") + '/' +
-                        sqlConfig.get("database") + "?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=UTF-8",
-                (String) sqlConfig.get("user"),
-                (String) sqlConfig.get("passWorld"));
+        this.linkMySQL();
         if (this.connection == null) {
             getLogger().error("数据库连接失败！请检查配置文件！");
             getPluginLoader().disablePlugin(this);
@@ -53,7 +49,7 @@ public class PlayerLog extends PluginBase {
             if (!resultSet.next()) {
                 getLogger().info("未找到表 " + this.blockTable + " 正在创建");
                 preparedStatement = connection.prepareStatement("create table " + this.blockTable +
-                        "(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+                        "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
                         "world VARCHAR(255) NOT NULL," +
                         "position VARCHAR(255) NOT NULL, " +
                         "operating VARCHAR(255) NOT NULL, " +
@@ -70,7 +66,7 @@ public class PlayerLog extends PluginBase {
             if (!resultSet.next()) {
                 getLogger().info("未找到表 " + this.playerTable + " 正在创建");
                 preparedStatement = connection.prepareStatement("create table " + this.playerTable +
-                        "(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+                        "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
                         "uuid VARCHAR(36) NOT NULL, " +
                         "name VARCHAR(255) NOT NULL, " +
                         "operating VARCHAR(255) NOT NULL, " +
@@ -85,7 +81,7 @@ public class PlayerLog extends PluginBase {
             if (!resultSet.next()) {
                 getLogger().info("未找到表 " + this.chatTable + " 正在创建");
                 preparedStatement = connection.prepareStatement("create table " + this.chatTable +
-                        "(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+                        "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
                         "uuid VARCHAR(36) NOT NULL, " +
                         "name VARCHAR(255) NOT NULL, " +
                         "chat TEXT NOT NULL, " +
@@ -112,6 +108,7 @@ public class PlayerLog extends PluginBase {
             getServer().getPluginManager().registerEvents(new PlayerChatListener(this, transcoding), this);
         }
         getServer().getCommandMap().register("", new AdminCommand("playerlog"));
+        getServer().getScheduler().scheduleDelayedTask(this, new CheckTask(this), 200);
         getLogger().info("§a加载完成！");
     }
 
@@ -126,6 +123,15 @@ public class PlayerLog extends PluginBase {
             }
         }
         getLogger().info("§c已卸载！");
+    }
+
+    public void linkMySQL() {
+        HashMap<String, Object> sqlConfig = this.config.get("MySQL", new HashMap<>());
+        this.connection = DbLib.getMySqlConnection("jdbc:mysql://" + sqlConfig.get("host") + ':' +
+                        sqlConfig.get("port") + '/' +
+                        sqlConfig.get("database") + "?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=UTF-8",
+                (String) sqlConfig.get("user"),
+                (String) sqlConfig.get("passWorld"));
     }
 
     @Override

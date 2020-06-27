@@ -18,7 +18,7 @@ public class AdminCommand extends BaseCommand {
     @Override
     public void sendHelp(CommandSender sender) {
         sender.sendMessage("§a/playerlog query §e进入查询模式");
-        sender.sendMessage("§a/playerlog delblocklog 世界 §e删除某世界的方块操作记录");
+        sender.sendMessage("§a/playerlog delblocklog 世界 §e删除指定世界的方块操作记录");
     }
 
 }

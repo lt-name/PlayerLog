@@ -6,7 +6,6 @@ api:
 load: POSTWORLD
 author: LT_Name
 depend:
-  - "EasySQL"
   - "DbLib"
 
 permissions:
