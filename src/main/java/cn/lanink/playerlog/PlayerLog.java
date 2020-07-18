@@ -10,7 +10,10 @@ import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
 import ru.nukkit.dblib.DbLib;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -35,7 +38,6 @@ public class PlayerLog extends PluginBase {
         saveDefaultConfig();
         getLogger().info("版本：" + VERSION);
         this.config = new Config(getDataFolder() + "/config.yml", 2);
-        getLogger().info("§a正在尝试连接数据库，请稍后...");
         this.linkMySQL();
         if (this.connection == null) {
             getLogger().error("数据库连接失败！请检查配置文件！");
@@ -108,7 +110,7 @@ public class PlayerLog extends PluginBase {
             getServer().getPluginManager().registerEvents(new PlayerChatListener(this, transcoding), this);
         }
         getServer().getCommandMap().register("", new AdminCommand("playerlog"));
-        getServer().getScheduler().scheduleDelayedTask(this, new CheckTask(this), 200);
+        getServer().getScheduler().scheduleRepeatingTask(this, new CheckTask(this), 1200, true);
         getLogger().info("§a加载完成！");
     }
 
@@ -126,6 +128,7 @@ public class PlayerLog extends PluginBase {
     }
 
     public void linkMySQL() {
+        getLogger().info("§a正在尝试连接数据库，请稍后...");
         HashMap<String, Object> sqlConfig = this.config.get("MySQL", new HashMap<>());
         this.connection = DbLib.getMySqlConnection("jdbc:mysql://" + sqlConfig.get("host") + ':' +
                         sqlConfig.get("port") + '/' +
