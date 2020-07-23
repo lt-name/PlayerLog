@@ -43,9 +43,9 @@ public class PlayerListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         if (player == null) return;
-        while (this.playerLog.queryPlayer.contains(player)) {
-            this.playerLog.queryPlayer.remove(player);
-        }
+        this.playerLog.queryPlayer.remove(player);
+        this.playerLog.queryCache.remove(player);
+        this.playerLog.uiCache.remove(player);
         this.insertPlayerLog(player, "QuitGame");
     }
 
