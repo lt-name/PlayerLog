@@ -126,11 +126,9 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>ru.nukkit.dblib.nukkit.DbLibPlugin</groupId>
+            <groupId>ru.nukkit.dblib</groupId>
             <artifactId>DbLib</artifactId>
-            <version>1.0.1</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/DbLib.jar</systemPath>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
