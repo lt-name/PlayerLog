@@ -102,7 +102,7 @@ public class PlayerListener implements Listener {
         this.insertPlayerLog(player, "UseItem:" + item.getId() + ":" + item.getDamage());
     }
 
-    private void insertPlayerLog(Player player, String operating) {
+    private void insertPlayerLog(final Player player, final String operating) {
         String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override

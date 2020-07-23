@@ -25,13 +25,11 @@ public class QueryCommand extends BaseSubCommand {
     public boolean execute(CommandSender sender, String label, String[] args) {
         Player player = (Player) sender;
         if (this.playerLog.queryPlayer.contains(player)) {
-            player.sendMessage("已退出查询模式！");
-            while (this.playerLog.queryPlayer.contains(player)) {
-                this.playerLog.queryPlayer.remove(player);
-            }
+            player.sendMessage("§a已退出查询模式！");
+            this.playerLog.queryPlayer.remove(player);
         }else {
-            player.sendMessage("已进入查询模式！");
-            player.sendMessage("提示:请在要查询的地方放置或破坏方块！");
+            player.sendMessage("§a已进入查询模式！");
+            player.sendMessage("§e提示:§a请在要查询的地方放置或破坏方块！");
             this.playerLog.queryPlayer.add(player);
         }
         return true;

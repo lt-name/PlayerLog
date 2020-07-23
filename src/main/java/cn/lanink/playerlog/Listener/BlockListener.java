@@ -1,13 +1,16 @@
 package cn.lanink.playerlog.Listener;
 
 import cn.lanink.playerlog.PlayerLog;
+import cn.lanink.playerlog.ui.UiCreate;
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.EventPriority;
 import cn.nukkit.event.Listener;
-import cn.nukkit.event.block.*;
-import cn.nukkit.form.window.FormWindowSimple;
+import cn.nukkit.event.block.BlockBreakEvent;
+import cn.nukkit.event.block.BlockBurnEvent;
+import cn.nukkit.event.block.BlockFadeEvent;
+import cn.nukkit.event.block.BlockPlaceEvent;
 import cn.nukkit.scheduler.AsyncTask;
 
 import java.sql.PreparedStatement;
@@ -88,7 +91,7 @@ public class BlockListener implements Listener {
         this.insertBlockLog("break", block, Block.get(0), "by@fade");
     }
 
-    private void insertBlockLog(String operating, Block oldBlock, Block newBlock, Player player) {
+    private void insertBlockLog(final String operating, final Block oldBlock, final Block newBlock, final Player player) {
         String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override
@@ -112,7 +115,7 @@ public class BlockListener implements Listener {
         });
     }
 
-    private void insertBlockLog(String operating, Block oldBlock, Block newBlock, String type) {
+    private void insertBlockLog(final String operating, final Block oldBlock, final Block newBlock, final String type) {
         String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override
@@ -136,7 +139,7 @@ public class BlockListener implements Listener {
         });
     }
 
-    private void query(Player player, Block block) {
+    private void query(final Player player, final Block block) {
         player.sendMessage("正在异步查询，请稍后...");
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override
@@ -162,11 +165,13 @@ public class BlockListener implements Listener {
                 }
                 if (linkedList.size() > 0) {
                     Collections.reverse(linkedList);
+                    LinkedList<LinkedList<String>> cache = new LinkedList<>();
                     LinkedList<String> send = new LinkedList<>();
-                    int x = 0;
                     for (String string : linkedList) {
-                        x++;
-                        if (x > 100) break;
+                        if (send.size() >= 20) {
+                            cache.add(send);
+                            send = new LinkedList<>();
+                        }
                         String[] s = string.split("#");
                         String name;
                         if (s[3].matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
@@ -177,12 +182,11 @@ public class BlockListener implements Listener {
                         }
                         send.add(name + " §f操作:§e" + s[0] + " §f旧方块:§c" + s[1] + " §f新方块:§a" + s[2] + " §f时间:§b" + s[5]);
                     }
-                    StringBuilder s = new StringBuilder();
-                    for (String string : send) {
-                        s.append(string).append("\n\n");
+                    if (cache.size() == 0) {
+                        cache.add(send);
                     }
-                    FormWindowSimple simple = new FormWindowSimple("§9记录(最近100条)", s.toString());
-                    player.showFormWindow(simple);
+                    playerLog.queryCache.put(player, cache);
+                    UiCreate.showQueryBlockLog(player, 1);
                 }else {
                     player.sendMessage("此方块没有操作记录！");
                 }

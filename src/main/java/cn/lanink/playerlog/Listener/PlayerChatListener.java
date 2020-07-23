@@ -54,7 +54,7 @@ public class PlayerChatListener implements Listener {
         this.insertChatLog(player, chat);
     }
 
-    private void insertChatLog(Player player, String message) {
+    private void insertChatLog(final Player player, final String message) {
         String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override

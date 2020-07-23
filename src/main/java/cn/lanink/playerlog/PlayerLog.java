@@ -5,6 +5,8 @@ import cn.lanink.playerlog.Listener.PlayerChatListener;
 import cn.lanink.playerlog.Listener.PlayerListener;
 import cn.lanink.playerlog.command.AdminCommand;
 import cn.lanink.playerlog.task.CheckTask;
+import cn.lanink.playerlog.ui.UiListener;
+import cn.lanink.playerlog.ui.UiType;
 import cn.nukkit.Player;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
@@ -14,19 +16,22 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 
 public class PlayerLog extends PluginBase {
 
-    private static String VERSION = "1.0.1-SNAPSHOT git-8d8d6ff";
+    public static String VERSION = "?";
     private static PlayerLog playerLog;
     private Config config;
     private Connection connection;
     public final String blockTable = "blockLog";
     public final String playerTable = "playerLog";
     public final String chatTable = "playerChatLog";
-    public ArrayList<Player> queryPlayer = new ArrayList<>();
+    public HashSet<Player> queryPlayer = new HashSet<>(); //在查询模式的玩家
+    public HashMap<Player, LinkedList<LinkedList<String>>> queryCache = new HashMap<>(); //查询结果缓存
+    public HashMap<Player, HashMap<Integer, UiType>> uiCache = new HashMap<>(); //ui缓存
 
     public static PlayerLog getInstance() {
         return playerLog;
@@ -40,7 +45,7 @@ public class PlayerLog extends PluginBase {
         this.config = new Config(getDataFolder() + "/config.yml", 2);
         this.linkMySQL();
         if (this.connection == null) {
-            getLogger().error("数据库连接失败！请检查配置文件！");
+            getLogger().error("§c数据库连接失败！请检查配置文件！");
             getPluginLoader().disablePlugin(this);
             return;
         }
@@ -109,6 +114,7 @@ public class PlayerLog extends PluginBase {
             }*/
             getServer().getPluginManager().registerEvents(new PlayerChatListener(this, transcoding), this);
         }
+        getServer().getPluginManager().registerEvents(new UiListener(this), this);
         getServer().getCommandMap().register("", new AdminCommand("playerlog"));
         getServer().getScheduler().scheduleRepeatingTask(this, new CheckTask(this), 1200, true);
         getLogger().info("§a加载完成！");
