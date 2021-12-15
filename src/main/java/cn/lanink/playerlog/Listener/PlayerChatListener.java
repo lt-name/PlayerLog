@@ -8,9 +8,8 @@ import cn.nukkit.event.Listener;
 import cn.nukkit.event.player.PlayerChatEvent;
 import cn.nukkit.event.player.PlayerCommandPreprocessEvent;
 import cn.nukkit.scheduler.AsyncTask;
+import com.smallaswater.easysql.mysql.data.SqlData;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -59,17 +58,12 @@ public class PlayerChatListener implements Listener {
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override
             public void onRun() {
-                try {
-                    PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("insert into " + playerLog.chatTable + "(uuid, name, chat, time) values(?,?,?,?)");
-                    preparedStatement.setString(1, player.getUniqueId().toString());
-                    preparedStatement.setString(2, player.getName());
-                    preparedStatement.setString(3, message);
-                    preparedStatement.setString(4, time);
-                    preparedStatement.execute();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                }
+                SqlData sqlData = new SqlData();
+                sqlData.put("uuid", player.getUniqueId().toString());
+                sqlData.put("name", player.getName());
+                sqlData.put("chat", message);
+                sqlData.put("time", time);
+                playerLog.getSqlManager().insertData(playerLog.chatTable, sqlData);
             }
         });
     }

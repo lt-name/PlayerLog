@@ -6,7 +6,7 @@ api:
 load: POSTWORLD
 author: LT_Name
 depend:
-  - "DbLib"
+  - "EasyMySQL"
 
 permissions:
   PlayerLog.command.admin:

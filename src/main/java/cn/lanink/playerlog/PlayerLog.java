@@ -10,11 +10,16 @@ import cn.lanink.playerlog.ui.UiType;
 import cn.nukkit.Player;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
-import ru.nukkit.dblib.DbLib;
+import com.smallaswater.easysql.exceptions.MySqlLoginException;
+import com.smallaswater.easysql.mysql.data.SqlData;
+import com.smallaswater.easysql.mysql.data.SqlDataList;
+import com.smallaswater.easysql.mysql.utils.TableType;
+import com.smallaswater.easysql.mysql.utils.Types;
+import com.smallaswater.easysql.mysql.utils.UserData;
+import com.smallaswater.easysql.v3.mysql.manager.SqlManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,10 +27,12 @@ import java.util.LinkedList;
 
 public class PlayerLog extends PluginBase {
 
-    public static String VERSION = "?";
+    public static String VERSION = "1.0.2-SNAPSHOT git-2a13a36";
     private static PlayerLog playerLog;
     private Config config;
-    private Connection connection;
+
+    private SqlManager sqlManager;
+
     public final String blockTable = "blockLog";
     public final String playerTable = "playerLog";
     public final String chatTable = "playerChatLog";
@@ -39,40 +46,42 @@ public class PlayerLog extends PluginBase {
 
     @Override
     public void onEnable() {
-        if (playerLog == null) playerLog = this;
+        if (playerLog == null) {
+            playerLog = this;
+        }
         saveDefaultConfig();
         getLogger().info("版本：" + VERSION);
         this.config = new Config(getDataFolder() + "/config.yml", 2);
         this.linkMySQL();
-        if (this.connection == null) {
+        if (!this.sqlManager.isEnable()) {
             getLogger().error("§c数据库连接失败！请检查配置文件！");
             getPluginLoader().disablePlugin(this);
             return;
         }
-        ResultSet resultSet;
         PreparedStatement preparedStatement;
         try {
-            resultSet = connection.getMetaData().getTables(null, null, this.blockTable, null);
-            if (!resultSet.next()) {
-                getLogger().info("未找到表 " + this.blockTable + " 正在创建");
-                preparedStatement = connection.prepareStatement("create table " + this.blockTable +
-                        "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
-                        "world VARCHAR(255) NOT NULL," +
-                        "position VARCHAR(255) NOT NULL, " +
-                        "operating VARCHAR(255) NOT NULL, " +
-                        "oldblock VARCHAR(255) NOT NULL, " +
-                        "newblock VARCHAR(255) NOT NULL, " +
-                        "uuid VARCHAR(36) NOT NULL, " +
-                        "name VARCHAR(255) NOT NULL, " +
-                        "time DATETIME NOT NULL, " +
-                        "INDEX(world), INDEX(position), INDEX(uuid)" +
-                        ")ENGINE=InnoDB DEFAULT CHARSET=utf8");
-                preparedStatement.execute();
+
+            final SqlDataList<SqlData> data = this.sqlManager.getData("select * from " + this.blockTable + " where id = 1 or 1=1");
+            for (SqlData data1 : data) {
+                this.getLogger().info(data1.getString("position"));
             }
-            resultSet = connection.getMetaData().getTables(null, null, this.playerTable, null);
-            if (!resultSet.next()) {
+
+            if (!this.sqlManager.isExistTable(this.blockTable)) {
+                this.getLogger().info("未找到表 " + this.blockTable + " 正在创建");
+                this.sqlManager.createTable(this.blockTable,
+                        new TableType("id", Types.ID),
+                        new TableType("world", Types.VARCHAR),
+                        new TableType("position", Types.VARCHAR),
+                        new TableType("operating", Types.VARCHAR),
+                        new TableType("oldblock", Types.VARCHAR),
+                        new TableType("newblock", Types.VARCHAR),
+                        new TableType("uuid", Types.CHAR.setSize(36)),
+                        new TableType("name", Types.VARCHAR),
+                        new TableType("time", Types.DATETIME));
+            }
+            if (!this.sqlManager.isExistTable(this.playerTable)) {
                 getLogger().info("未找到表 " + this.playerTable + " 正在创建");
-                preparedStatement = connection.prepareStatement("create table " + this.playerTable +
+                preparedStatement = this.sqlManager.getConnection().prepareStatement("create table " + this.playerTable +
                         "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
                         "uuid VARCHAR(36) NOT NULL, " +
                         "name VARCHAR(255) NOT NULL, " +
@@ -84,10 +93,9 @@ public class PlayerLog extends PluginBase {
                         ")ENGINE=InnoDB DEFAULT CHARSET=utf8");
                 preparedStatement.execute();
             }
-            resultSet = connection.getMetaData().getTables(null, null, this.chatTable, null);
-            if (!resultSet.next()) {
+            if (!this.sqlManager.isExistTable(this.chatTable)) {
                 getLogger().info("未找到表 " + this.chatTable + " 正在创建");
-                preparedStatement = connection.prepareStatement("create table " + this.chatTable +
+                preparedStatement = this.sqlManager.getConnection().prepareStatement("create table " + this.chatTable +
                         "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
                         "uuid VARCHAR(36) NOT NULL, " +
                         "name VARCHAR(255) NOT NULL, " +
@@ -122,25 +130,27 @@ public class PlayerLog extends PluginBase {
 
     @Override
     public void onDisable() {
-        if (this.connection != null) {
-            getLogger().info("§c正在断开数据库连接，请稍后...");
-            try {
-                this.connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        if (this.sqlManager != null) {
+            this.getLogger().info("§c正在断开数据库连接，请稍后...");
+            this.sqlManager.disable();
         }
-        getLogger().info("§c已卸载！");
+        this.getLogger().info("§c已卸载！");
     }
 
     public void linkMySQL() {
         getLogger().info("§a正在尝试连接数据库，请稍后...");
         HashMap<String, Object> sqlConfig = this.config.get("MySQL", new HashMap<>());
-        this.connection = DbLib.getMySqlConnection("jdbc:mysql://" + sqlConfig.get("host") + ':' +
-                        sqlConfig.get("port") + '/' +
-                        sqlConfig.get("database") + "?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=UTF-8",
-                (String) sqlConfig.get("user"),
-                (String) sqlConfig.get("passWorld"));
+        try {
+            this.sqlManager = new SqlManager(this,
+                    new UserData(
+                            (String) sqlConfig.get("user"),
+                            (String) sqlConfig.get("passWorld"),
+                            (String) sqlConfig.get("host"),
+                            (int) sqlConfig.get("port"),
+                            (String) sqlConfig.get("database")));
+        } catch (MySqlLoginException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -148,7 +158,11 @@ public class PlayerLog extends PluginBase {
         return this.config;
     }
 
+    public SqlManager getSqlManager() {
+        return this.sqlManager;
+    }
+
     public Connection getConnection() {
-        return this.connection;
+        return this.sqlManager.getConnection();
     }
 }

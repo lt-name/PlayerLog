@@ -12,9 +12,11 @@ import cn.nukkit.event.block.BlockBurnEvent;
 import cn.nukkit.event.block.BlockFadeEvent;
 import cn.nukkit.event.block.BlockPlaceEvent;
 import cn.nukkit.scheduler.AsyncTask;
+import com.smallaswater.easysql.mysql.data.SqlData;
+import com.smallaswater.easysql.mysql.data.SqlDataList;
+import com.smallaswater.easysql.v3.mysql.utils.SelectType;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -38,13 +40,17 @@ public class BlockListener implements Listener {
     public void onPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
-        if (player == null || block == null) return;
+        if (player == null || block == null) {
+            return;
+        }
         if (this.playerLog.queryPlayer.contains(player)) {
             event.setCancelled(true);
             this.query(player, block);
             return;
         }
-        if (event.isCancelled()) return;
+        if (event.isCancelled()) {
+            return;
+        }
         Block oldBlock = block.getLevel().getBlock(block);
         this.insertBlockLog("place", oldBlock, block, player);
     }
@@ -55,10 +61,14 @@ public class BlockListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onBreak(BlockBreakEvent event) {
-        if (event.isCancelled()) return;
+        if (event.isCancelled()) {
+            return;
+        }
         Player player = event.getPlayer();
         Block block = event.getBlock();
-        if (player == null || block == null) return;
+        if (player == null || block == null) {
+            return;
+        }
         if (this.playerLog.queryPlayer.contains(player)) {
             event.setCancelled(true);
             this.query(player, block);
@@ -73,9 +83,13 @@ public class BlockListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onBurn(BlockBurnEvent event) {
-        if (event.isCancelled()) return;
+        if (event.isCancelled()) {
+            return;
+        }
         Block block = event.getBlock();
-        if (block == null) return;
+        if (block == null) {
+            return;
+        }
         this.insertBlockLog("break", block, Block.get(0), "by@burn");
     }
 
@@ -85,9 +99,13 @@ public class BlockListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onFade(BlockFadeEvent event) {
-        if (event.isCancelled()) return;
+        if (event.isCancelled()) {
+            return;
+        }
         Block block = event.getBlock();
-        if (block == null) return;
+        if (block == null) {
+            return;
+        }
         this.insertBlockLog("break", block, Block.get(0), "by@fade");
     }
 
@@ -144,7 +162,20 @@ public class BlockListener implements Listener {
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override
             public void onRun() {
+                SqlDataList<SqlData> datas = playerLog.getSqlManager().getData(playerLog.blockTable,
+                        /*new SelectType("world", block.getLevel().getName(), SelectType.Types.EQUAL),*/
+                        new SelectType("position", getStringPosition(block), SelectType.Types.EQUAL));
+
                 LinkedList<String> linkedList = new LinkedList<>();
+                for (SqlData sqlData : datas) {
+                    linkedList.add(sqlData.getString("operating") + "#" +
+                            sqlData.getString("oldblock") + "#" +
+                            sqlData.getString("newblock") + "#" +
+                            sqlData.getString("uuid") + "#" +
+                            sqlData.getString("name") + "#" +
+                            sqlData.getString("time"));
+                }
+/*
                 try {
                     PreparedStatement preparedStatement = playerLog.getConnection()
                             .prepareStatement("select operating,oldblock,newblock,uuid,name,time from " +
@@ -162,7 +193,7 @@ public class BlockListener implements Listener {
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
-                }
+                }*/
                 if (linkedList.size() > 0) {
                     Collections.reverse(linkedList);
                     LinkedList<LinkedList<String>> cache = new LinkedList<>();
