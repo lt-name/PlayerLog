@@ -13,7 +13,7 @@ public class QueryCommand extends BaseSubCommand {
 
     @Override
     public boolean canUser(CommandSender sender) {
-        return sender.isPlayer() && sender.isOp();
+        return sender.isPlayer() && sender.hasPermission("PlayerLog.Command.Query");
     }
 
     @Override

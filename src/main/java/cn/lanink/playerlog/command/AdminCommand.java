@@ -9,7 +9,6 @@ public class AdminCommand extends BaseCommand {
 
     public AdminCommand(String name) {
         super(name, "管理命令");
-        this.setPermission("PlayerLog.command.admin");
         this.addSubCommand(new QueryCommand("query"));
         this.addSubCommand(new DelBlockLogCommand("delblocklog"));
         this.loadCommandBase();

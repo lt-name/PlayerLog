@@ -9,6 +9,9 @@ depend:
   - "EasyMySQL"
 
 permissions:
-  PlayerLog.command.admin:
-    description: "PlayerLog 管理命令"
+  PlayerLog.Command.DelBlockLog:
+    description: "PlayerLog 删除方块记录命令权限"
+    default: op
+  PlayerLog.Command.Query:
+    description: "PlayerLog 查询命令权限"
     default: op
