@@ -14,10 +14,7 @@ import cn.nukkit.event.block.BlockPlaceEvent;
 import cn.nukkit.scheduler.AsyncTask;
 import com.smallaswater.easysql.mysql.data.SqlData;
 import com.smallaswater.easysql.mysql.data.SqlDataList;
-import com.smallaswater.easysql.v3.mysql.utils.SelectType;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -114,21 +111,18 @@ public class BlockListener implements Listener {
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override
             public void onRun() {
-                try {
-                    PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("insert into " + playerLog.blockTable + "(world, position, operating, oldblock, newblock, uuid, name, time) values(?,?,?,?,?,?,?,?)");
-                    preparedStatement.setString(1, oldBlock.getLevel().getName());
-                    preparedStatement.setString(2, getStringPosition(oldBlock));
-                    preparedStatement.setString(3, operating);
-                    preparedStatement.setString(4, getStringID(oldBlock));
-                    preparedStatement.setString(5, getStringID(newBlock));
-                    preparedStatement.setString(6, player.getUniqueId().toString());
-                    preparedStatement.setString(7, player.getName());
-                    preparedStatement.setString(8, time);
-                    preparedStatement.execute();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                playerLog.getSqlManager().insertData(
+                        playerLog.blockTable,
+                        new SqlData()
+                                .put("world", oldBlock.getLevel().getName())
+                                .put("position", getStringPosition(oldBlock))
+                                .put("operating", operating)
+                                .put("oldblock", getStringID(oldBlock))
+                                .put("newblock", getStringID(newBlock))
+                                .put("uuid", player.getUniqueId().toString())
+                                .put("name", player.getName())
+                                .put("time", time)
+                );
             }
         });
     }
@@ -138,21 +132,18 @@ public class BlockListener implements Listener {
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override
             public void onRun() {
-                try {
-                    PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("insert into " + playerLog.blockTable + "(world, position, operating, oldblock, newblock, uuid, name, time) values(?,?,?,?,?,?,?,?)");
-                    preparedStatement.setString(1, oldBlock.getLevel().getName());
-                    preparedStatement.setString(2, getStringPosition(oldBlock));
-                    preparedStatement.setString(3, operating);
-                    preparedStatement.setString(4, getStringID(oldBlock));
-                    preparedStatement.setString(5, getStringID(newBlock));
-                    preparedStatement.setString(6, "------------------------------------");
-                    preparedStatement.setString(7, type);
-                    preparedStatement.setString(8, time);
-                    preparedStatement.execute();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                playerLog.getSqlManager().insertData(
+                        playerLog.blockTable,
+                        new SqlData()
+                                .put("world", oldBlock.getLevel().getName())
+                                .put("position", getStringPosition(oldBlock))
+                                .put("operating", operating)
+                                .put("oldblock", getStringID(oldBlock))
+                                .put("newblock", getStringID(newBlock))
+                                .put("uuid", "------------------------------------")
+                                .put("name", type)
+                                .put("time", time)
+                );
             }
         });
     }
@@ -162,9 +153,11 @@ public class BlockListener implements Listener {
         this.playerLog.getServer().getScheduler().scheduleAsyncTask(this.playerLog, new AsyncTask() {
             @Override
             public void onRun() {
-                SqlDataList<SqlData> datas = playerLog.getSqlManager().getData(playerLog.blockTable,
-                        /*new SelectType("world", block.getLevel().getName(), SelectType.Types.EQUAL),*/
-                        new SelectType("position", getStringPosition(block), SelectType.Types.EQUAL));
+                SqlDataList<SqlData> datas = playerLog.getSqlManager().getData(
+                        playerLog.blockTable,
+                        "*",
+                        new SqlData().put("world", block.getLevel().getName()).put("position", getStringPosition(block))
+                );
 
                 LinkedList<String> linkedList = new LinkedList<>();
                 for (SqlData sqlData : datas) {
@@ -175,25 +168,6 @@ public class BlockListener implements Listener {
                             sqlData.getString("name") + "#" +
                             sqlData.getString("time"));
                 }
-/*
-                try {
-                    PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("select operating,oldblock,newblock,uuid,name,time from " +
-                                    playerLog.blockTable + " where world = ? and position = ?");
-                    preparedStatement.setString(1, block.getLevel().getName());
-                    preparedStatement.setString(2, getStringPosition(block));
-                    ResultSet resultSet = preparedStatement.executeQuery();
-                    while (resultSet.next()) {
-                        linkedList.add(resultSet.getString("operating") + "#" +
-                                resultSet.getString("oldblock") + "#" +
-                                resultSet.getString("newblock") + "#" +
-                                resultSet.getString("uuid") + "#" +
-                                resultSet.getString("name") + "#" +
-                                resultSet.getString("time"));
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }*/
                 if (linkedList.size() > 0) {
                     Collections.reverse(linkedList);
                     LinkedList<LinkedList<String>> cache = new LinkedList<>();

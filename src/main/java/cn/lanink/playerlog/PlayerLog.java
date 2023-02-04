@@ -11,23 +11,19 @@ import cn.nukkit.Player;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
 import com.smallaswater.easysql.exceptions.MySqlLoginException;
-import com.smallaswater.easysql.mysql.data.SqlData;
-import com.smallaswater.easysql.mysql.data.SqlDataList;
+import com.smallaswater.easysql.mysql.utils.DataType;
 import com.smallaswater.easysql.mysql.utils.TableType;
-import com.smallaswater.easysql.mysql.utils.Types;
 import com.smallaswater.easysql.mysql.utils.UserData;
 import com.smallaswater.easysql.v3.mysql.manager.SqlManager;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
 public class PlayerLog extends PluginBase {
 
-    public static String VERSION = "1.0.2-SNAPSHOT git-2a13a36";
+    public static String VERSION = "1.0.2-SNAPSHOT git-f9d7a02";
     private static PlayerLog playerLog;
     private Config config;
 
@@ -60,24 +56,18 @@ public class PlayerLog extends PluginBase {
         }
         PreparedStatement preparedStatement;
         try {
-
-            final SqlDataList<SqlData> data = this.sqlManager.getData("select * from " + this.blockTable + " where id = 1 or 1=1");
-            for (SqlData data1 : data) {
-                this.getLogger().info(data1.getString("position"));
-            }
-
             if (!this.sqlManager.isExistTable(this.blockTable)) {
                 this.getLogger().info("未找到表 " + this.blockTable + " 正在创建");
                 this.sqlManager.createTable(this.blockTable,
-                        new TableType("id", Types.ID),
-                        new TableType("world", Types.VARCHAR),
-                        new TableType("position", Types.VARCHAR),
-                        new TableType("operating", Types.VARCHAR),
-                        new TableType("oldblock", Types.VARCHAR),
-                        new TableType("newblock", Types.VARCHAR),
-                        new TableType("uuid", Types.CHAR.setSize(36)),
-                        new TableType("name", Types.VARCHAR),
-                        new TableType("time", Types.DATETIME));
+                        new TableType("id", DataType.getID()),
+                        new TableType("world", DataType.getVARCHAR()),
+                        new TableType("position", DataType.getVARCHAR()),
+                        new TableType("operating", DataType.getVARCHAR()),
+                        new TableType("oldblock", DataType.getVARCHAR()),
+                        new TableType("newblock", DataType.getVARCHAR()),
+                        new TableType("uuid", DataType.getUUID()),
+                        new TableType("name", DataType.getVARCHAR()),
+                        new TableType("time", DataType.getDATETIME()));
             }
             if (!this.sqlManager.isExistTable(this.playerTable)) {
                 getLogger().info("未找到表 " + this.playerTable + " 正在创建");

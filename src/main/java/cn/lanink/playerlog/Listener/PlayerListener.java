@@ -10,9 +10,8 @@ import cn.nukkit.event.player.*;
 import cn.nukkit.inventory.PlayerInventory;
 import cn.nukkit.item.Item;
 import cn.nukkit.scheduler.AsyncTask;
+import com.smallaswater.easysql.mysql.data.SqlData;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -108,20 +107,16 @@ public class PlayerListener implements Listener {
             @Override
             public void onRun() {
                 String position = player.getFloorX() + ":" + player.getFloorY() + ":" + player.getFloorZ();
-                try {
-                    PreparedStatement preparedStatement = playerLog.getConnection()
-                            .prepareStatement("insert into " + playerLog.playerTable +
-                                    "(uuid, name, operating, position, world, time) values(?,?,?,?,?,?)");
-                    preparedStatement.setString(1, player.getUniqueId().toString());
-                    preparedStatement.setString(2, player.getName());
-                    preparedStatement.setString(3, operating);
-                    preparedStatement.setString(4, position);
-                    preparedStatement.setString(5, player.getLevel().getName());
-                    preparedStatement.setString(6, time);
-                    preparedStatement.execute();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                }
+                playerLog.getSqlManager().insertData(
+                        playerLog.playerTable,
+                        new SqlData()
+                                .put("uuid", player.getUniqueId().toString())
+                                .put("name", player.getName())
+                                .put("operating", operating)
+                                .put("position", position)
+                                .put("world", player.getLevel().getName())
+                                .put("time", time)
+                );
             }
         });
     }
