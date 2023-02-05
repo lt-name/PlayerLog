@@ -47,21 +47,20 @@ public class PlayerLog extends PluginBase {
         }
         saveDefaultConfig();
         getLogger().info("版本：" + VERSION);
-        this.config = new Config(getDataFolder() + "/config.yml", 2);
+        this.config = new Config(getDataFolder() + "/config.yml", Config.YAML);
         this.linkMySQL();
         if (!this.sqlManager.isEnable()) {
             getLogger().error("§c数据库连接失败！请检查配置文件！");
             getPluginLoader().disablePlugin(this);
             return;
         }
-        PreparedStatement preparedStatement;
         try {
             if (!this.sqlManager.isExistTable(this.blockTable)) {
                 this.getLogger().info("未找到表 " + this.blockTable + " 正在创建");
                 this.sqlManager.createTable(this.blockTable,
                         new TableType("id", DataType.getID()),
-                        new TableType("world", DataType.getVARCHAR()),
-                        new TableType("position", DataType.getVARCHAR()),
+                        new TableType("world", DataType.getVARCHAR(), true),
+                        new TableType("position", DataType.getVARCHAR(), true),
                         new TableType("operating", DataType.getVARCHAR()),
                         new TableType("oldblock", DataType.getVARCHAR()),
                         new TableType("newblock", DataType.getVARCHAR()),
@@ -70,33 +69,27 @@ public class PlayerLog extends PluginBase {
                         new TableType("time", DataType.getDATETIME()));
             }
             if (!this.sqlManager.isExistTable(this.playerTable)) {
-                getLogger().info("未找到表 " + this.playerTable + " 正在创建");
-                preparedStatement = this.sqlManager.getConnection().prepareStatement("create table " + this.playerTable +
-                        "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
-                        "uuid VARCHAR(36) NOT NULL, " +
-                        "name VARCHAR(255) NOT NULL, " +
-                        "operating VARCHAR(255) NOT NULL, " +
-                        "position VARCHAR(255) NOT NULL, " +
-                        "world VARCHAR(255) NOT NULL, " +
-                        "time DATETIME NOT NULL, " +
-                        "INDEX(uuid), INDEX(world)" +
-                        ")ENGINE=InnoDB DEFAULT CHARSET=utf8");
-                preparedStatement.execute();
+                this.getLogger().info("未找到表 " + this.playerTable + " 正在创建");
+                this.sqlManager.createTable(this.playerTable,
+                        new TableType("id", DataType.getID()),
+                        new TableType("uuid", DataType.getUUID(), true),
+                        new TableType("name", DataType.getVARCHAR()),
+                        new TableType("operating", DataType.getVARCHAR()),
+                        new TableType("position", DataType.getVARCHAR()),
+                        new TableType("world", DataType.getVARCHAR(), true),
+                        new TableType("time", DataType.getDATETIME()));
             }
             if (!this.sqlManager.isExistTable(this.chatTable)) {
-                getLogger().info("未找到表 " + this.chatTable + " 正在创建");
-                preparedStatement = this.sqlManager.getConnection().prepareStatement("create table " + this.chatTable +
-                        "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
-                        "uuid VARCHAR(36) NOT NULL, " +
-                        "name VARCHAR(255) NOT NULL, " +
-                        "chat TEXT NOT NULL, " +
-                        "time DATETIME NOT NULL, " +
-                        "INDEX(uuid)" +
-                        ")ENGINE=InnoDB DEFAULT CHARSET=utf8");
-                preparedStatement.execute();
+                this.getLogger().info("未找到表 " + this.chatTable + " 正在创建");
+                this.sqlManager.createTable(this.chatTable,
+                        new TableType("id", DataType.getID()),
+                        new TableType("uuid", DataType.getUUID(), true),
+                        new TableType("name", DataType.getVARCHAR()),
+                        new TableType("chat", DataType.getTEXT()),
+                        new TableType("time", DataType.getDATETIME()));
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            this.getLogger().error("§c创建表失败！请检查配置文件或数据库配置！", e);
         }
         if (this.config.getBoolean("记录方块变化", true)) {
             getServer().getPluginManager().registerEvents(new BlockListener(this), this);
