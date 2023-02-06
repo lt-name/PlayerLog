@@ -4,10 +4,7 @@ import cn.lanink.playerlog.command.base.BaseSubCommand;
 import cn.nukkit.command.CommandSender;
 import cn.nukkit.command.data.CommandParamType;
 import cn.nukkit.command.data.CommandParameter;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import com.smallaswater.easysql.mysql.data.SqlData;
 
 public class DelBlockLogCommand extends BaseSubCommand {
 
@@ -28,26 +25,12 @@ public class DelBlockLogCommand extends BaseSubCommand {
     @Override
     public boolean execute(CommandSender sender, String label, String[] args) {
         if (args.length == 2) {
-            boolean isHave = false;
-            try {
-                PreparedStatement preparedStatement = playerLog.getConnection()
-                        .prepareStatement("select world from " + playerLog.blockTable + " where world = ?");
-                preparedStatement.setString(1, args[1]);
-                ResultSet resultSet = preparedStatement.executeQuery();
-                if (resultSet.next()) {
-                    isHave = resultSet.getString("world") != null;
-                }
-                if (isHave) {
-                    preparedStatement = playerLog.getConnection()
-                            .prepareStatement("delete from " + playerLog.blockTable + " where world = ?");
-                    preparedStatement.setString(1, args[1]);
-                    preparedStatement.execute();
-                    sender.sendMessage("§a世界 " + args[1] + " 的记录已删除！");
-                }else {
-                    sender.sendMessage("§c数据库中没有世界 " + args[1] + " 的记录！");
-                }
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
+            String worldName = args[1];
+            if (this.playerLog.getSqlManager().isExistsData(playerLog.blockTable, "world", worldName)) {
+                this.playerLog.getSqlManager().deleteData(playerLog.blockTable, new SqlData().put("world", worldName));
+                sender.sendMessage("§a世界 " + worldName + " 的记录已删除！");
+            }else {
+                sender.sendMessage("§c数据库中没有世界 " + worldName + " 的记录！");
             }
         }else {
             sender.sendMessage("§a/playerlog help §e查看帮助");

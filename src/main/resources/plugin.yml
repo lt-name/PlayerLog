@@ -1,6 +1,6 @@
 name: PlayerLog
 main: cn.lanink.playerlog.PlayerLog
-version: "1.0.2-SNAPSHOT"
+version: "1.0.3"
 api:
   - 1.0.0
 load: POSTWORLD

@@ -6,7 +6,7 @@
 
     <groupId>cn.lanink</groupId>
     <artifactId>PlayerLog</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.3<!-- -SNAPSHOT--></version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -73,15 +73,9 @@
                         </goals>
                         <configuration>
                             <includes>
-                                <include>${project.basedir}/src/main/java/cn/lanink/playerlog/PlayerLog.java</include>
                                 <include>${project.basedir}/src/main/resources/plugin.yml</include>
                             </includes>
                             <replacements>
-                                <replacement>
-                                    <token>VERSION = ".*"</token>
-                                    <!--suppress UnresolvedMavenProperty -->
-                                    <value>VERSION = "${project.version} git-${git.commit.id.abbrev}"</value>
-                                </replacement>
                                 <replacement>
                                     <token>version: ".*"</token>
                                     <value>version: "${project.version}"</value>
@@ -131,7 +125,7 @@
         <dependency>
             <groupId>com.smallaswater.easysql</groupId>
             <artifactId>EasyMySQL</artifactId>
-            <version>3.0.5-SNAPSHOT</version>
+            <version>3.0.6</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

@@ -4,7 +4,6 @@ import cn.lanink.playerlog.Listener.BlockListener;
 import cn.lanink.playerlog.Listener.PlayerChatListener;
 import cn.lanink.playerlog.Listener.PlayerListener;
 import cn.lanink.playerlog.command.AdminCommand;
-import cn.lanink.playerlog.task.CheckTask;
 import cn.lanink.playerlog.ui.UiListener;
 import cn.lanink.playerlog.ui.UiType;
 import cn.nukkit.Player;
@@ -23,7 +22,6 @@ import java.util.LinkedList;
 
 public class PlayerLog extends PluginBase {
 
-    public static String VERSION = "1.0.2-SNAPSHOT git-f9d7a02";
     private static PlayerLog playerLog;
     private Config config;
 
@@ -46,7 +44,7 @@ public class PlayerLog extends PluginBase {
             playerLog = this;
         }
         saveDefaultConfig();
-        getLogger().info("版本：" + VERSION);
+        getLogger().info("版本：" + getVersion());
         this.config = new Config(getDataFolder() + "/config.yml", Config.YAML);
         this.linkMySQL();
         if (!this.sqlManager.isEnable()) {
@@ -107,7 +105,6 @@ public class PlayerLog extends PluginBase {
         }
         getServer().getPluginManager().registerEvents(new UiListener(this), this);
         getServer().getCommandMap().register("", new AdminCommand("playerlog"));
-        getServer().getScheduler().scheduleRepeatingTask(this, new CheckTask(this), 1200, true);
         getLogger().info("§a加载完成！");
     }
 
@@ -147,5 +144,11 @@ public class PlayerLog extends PluginBase {
 
     public Connection getConnection() {
         return this.sqlManager.getConnection();
+    }
+
+    public String getVersion() {
+        Config config = new Config(Config.PROPERTIES);
+        config.load(this.getResource("git.properties"));
+        return config.get("git.build.version", this.getDescription().getVersion()) + " git-" + config.get("git.commit.id.abbrev", "Unknown");
     }
 }
